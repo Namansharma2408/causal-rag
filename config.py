@@ -44,6 +44,26 @@ class Config:
     SESSION_DIR: str = "sessions"
     MAX_MEMORY_ITEMS: int = 10
     
+    # Performance settings
+    FAST_MODE: bool = os.getenv("FAST_MODE", "true").lower() == "true"  # Skip reranking, use fast model
+    PARALLEL_SUBQUERIES: bool = True  # Process sub-queries in parallel
+    MAX_PARALLEL_QUERIES: int = 3  # Max concurrent sub-query processing
+    SKIP_RERANK_THRESHOLD: int = 3  # Skip reranking if docs <= this
+    
+    # Thinking Mode settings
+    THINKING_MODE: bool = os.getenv("THINKING_MODE", "false").lower() == "true"  # Multi-model consensus
+    THINKING_MODELS: list = None  # Will be set in __post_init__
+    
+    def __post_init__(self):
+        """Initialize thinking models list."""
+        if self.THINKING_MODELS is None:
+            self.THINKING_MODELS = [
+                "deepseek-r1:14b",      # Deep reasoning model
+                "phi3:14b",              # Microsoft's powerful model  
+                "qwen2.5-coder:7b",      # Coding specialist
+                "codellama:7b",          # Meta's code model
+            ]
+    
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 

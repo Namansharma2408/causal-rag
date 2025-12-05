@@ -10,6 +10,8 @@ from .extractor import ExtractorAgent
 from .reasoner import ReasonerAgent
 from .proof import ProofAgent
 from .quality import QualityCheckerAgent
+from .decomposer import DecomposerAgent
+from .thinking import ThinkingAgent
 
 __all__ = [
     "BaseAgent",
@@ -19,5 +21,7 @@ __all__ = [
     "ExtractorAgent",
     "ReasonerAgent",
     "ProofAgent",
-    "QualityCheckerAgent"
+    "QualityCheckerAgent",
+    "DecomposerAgent",
+    "ThinkingAgent"
 ]
