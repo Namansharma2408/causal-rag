@@ -8,11 +8,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from .config import Config, logger
 from .models import Query, QueryType, Document, RAGResult
 from .services import (
-    EmbeddingService, 
-    OllamaLLM, 
+    EmbeddingService,
     MongoDBManager, 
     ConversationMemory,
-    TranscriptManager
+    TranscriptManager,
+    get_llm,
+    UnifiedLLM
 )
 from .agents import (
     RouterAgent,
@@ -35,11 +36,11 @@ class RAGOrchestrator:
         
         # Initialize services
         self.embedding = EmbeddingService(self.config)
-        self.llm = OllamaLLM(self.config)
+        self.llm = get_llm()  # Use unified LLM provider
         self.mongodb = MongoDBManager(self.config)
         self.transcripts = TranscriptManager(self.config)
         
-        # Initialize agents
+        # Initialize agents (they will use get_llm() internally)
         self.decomposer = DecomposerAgent(self.llm)  # Multi-hop decomposition
         self.router = RouterAgent(self.llm)
         self.retriever = RetrieverAgent(self.mongodb, self.embedding, self.config)

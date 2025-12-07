@@ -1,2 +1,14 @@
 venv/
 chat_sessions/
+.env*
+
+
+docker-compose.yml
+Dockerfile
+Dockerfile.allinone
+Dockerfile.app
+*.csv
+*.sh
+sessions/
+mongo_data/
+chat_sessions/

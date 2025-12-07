@@ -6,15 +6,15 @@ from typing import Optional, Any, List
 
 from .base import BaseAgent
 from ..models import Query, Document, AgentResponse
-from ..services.ollama import OllamaLLM
+from ..services.llm_provider import get_llm, UnifiedLLM
 
 
 class ExtractorAgent(BaseAgent):
     """Extracts key information from documents."""
     
-    def __init__(self, llm: Optional[OllamaLLM] = None):
+    def __init__(self, llm: Optional[UnifiedLLM] = None):
         super().__init__("Extractor")
-        self.llm = llm or OllamaLLM()
+        self.llm = llm or get_llm()
     
     def process(self, query: Query, context: Optional[Any] = None) -> AgentResponse:
         """Extract relevant information from documents."""

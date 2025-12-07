@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from .base import BaseAgent
 from ..models import Query, AgentResponse
-from ..services.ollama import OllamaLLM
+from ..services.llm_provider import get_llm, UnifiedLLM
 
 
 @dataclass
@@ -41,9 +41,9 @@ class DecomposerAgent(BaseAgent):
     # Maximum sub-queries to prevent over-decomposition
     MAX_SUB_QUERIES = 4
     
-    def __init__(self, llm: Optional[OllamaLLM] = None):
+    def __init__(self, llm: Optional[UnifiedLLM] = None):
         super().__init__("Decomposer")
-        self.llm = llm or OllamaLLM()
+        self.llm = llm or get_llm()
     
     def process(self, query: Query, context: Optional[Any] = None) -> AgentResponse:
         """

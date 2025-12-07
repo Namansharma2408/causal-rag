@@ -7,15 +7,15 @@ import re
 
 from .base import BaseAgent
 from ..models import Query, AgentResponse
-from ..services.ollama import OllamaLLM
+from ..services.llm_provider import get_llm, UnifiedLLM
 
 
 class QualityCheckerAgent(BaseAgent):
     """Evaluates answer quality and provides feedback."""
     
-    def __init__(self, llm: Optional[OllamaLLM] = None):
+    def __init__(self, llm: Optional[UnifiedLLM] = None):
         super().__init__("QualityChecker")
-        self.llm = llm or OllamaLLM()
+        self.llm = llm or get_llm()
     
     def process(self, query: Query, context: Optional[Any] = None) -> AgentResponse:
         """Evaluate answer quality."""

@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from ..models import Query, Document
-from ..services.ollama import OllamaLLM
+from ..services.llm_provider import get_llm, UnifiedLLM, LLMProvider
 
 
 class ModelRole(Enum):
@@ -70,23 +70,23 @@ class ThinkingAgent:
     4. Winner refines their answer using all feedback
     """
     
-    def __init__(self, llm: OllamaLLM, models: List[str] = None):
-        self.llm = llm
-        # Use 4 different models for diverse perspectives
+    def __init__(self, llm: UnifiedLLM = None, models: List[str] = None):
+        self.llm = llm or get_llm()
+        # Use Ollama models for thinking mode - different models for diverse perspectives
         self.models = models or [
-            "deepseek-r1:14b",      # Deep reasoning model
-            "phi3:14b",              # Microsoft's powerful model  
-            "qwen2.5-coder:7b",      # Coding specialist
-            "codellama:7b",          # Meta's code model
+            "phi3:14b",
+            "deepseek-r1:14b",
+            "qwen2.5-coder:7b",
+            "codellama:7b"
         ]
-        self.max_workers = 4
+        self.max_workers = 2  # Parallel execution for Ollama
         
-        # Map each model to a persona
+        # Map each model to a persona with different Ollama models
         self.model_personas = {
-            ModelRole.ANALYST: self.models[0] if len(self.models) > 0 else "qwen2.5-coder:7b",
-            ModelRole.CRITIC: self.models[1] if len(self.models) > 1 else "qwen2.5-coder:7b",
-            ModelRole.SYNTHESIZER: self.models[2] if len(self.models) > 2 else "qwen2.5-coder:7b",
-            ModelRole.PRAGMATIST: self.models[3] if len(self.models) > 3 else "qwen2.5-coder:7b",
+            ModelRole.ANALYST: "phi3:14b",
+            ModelRole.CRITIC: "deepseek-r1:14b",
+            ModelRole.SYNTHESIZER: "qwen2.5-coder:7b",
+            ModelRole.PRAGMATIST: "codellama:7b",
         }
     
     def process(
@@ -180,10 +180,10 @@ class ThinkingAgent:
         """Get response from a single model persona using its assigned model."""
         
         # Use the specific model assigned to this persona
-        model_name = self.model_personas.get(role, self.llm.config.QUALITY_MODEL)
+        model_name = self.model_personas.get(role, "qwen2.5-coder:7b")
         
         # Generate using the specific model for this persona
-        response = self.llm.generate(prompt, model=model_name, temperature=0.7)
+        response = self.llm.generate(prompt, model=model_name, temperature=0.7, provider=LLMProvider.OLLAMA)
         
         # Parse the structured response
         answer = self._extract_section(response, "ANSWER")
@@ -266,7 +266,7 @@ SUGGESTIONS:
 
 Be specific and constructive."""
 
-        response = self.llm.generate(prompt, model="codellama:7b", temperature=0.3)
+        response = self.llm.generate(prompt, model="codellama:7b", temperature=0.3, provider=LLMProvider.OLLAMA)
         
         # Parse review
         score = self._extract_score(response)
@@ -377,7 +377,7 @@ Now write your FINAL REFINED ANSWER that:
 Write a comprehensive, well-structured answer with clear sections.
 Use markdown formatting for clarity."""
 
-        refined_answer = self.llm.generate(prompt, model=self.llm.config.QUALITY_MODEL, temperature=0.4)
+        refined_answer = self.llm.generate(prompt, model=self.model_personas[winner.role], temperature=0.4, provider=LLMProvider.OLLAMA)
         
         refinement_notes = f"""
 Refinement based on {len(winner_feedback)} peer reviews.

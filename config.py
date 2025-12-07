@@ -24,11 +24,22 @@ class Config:
     TRANSCRIPTS_DB: str = "full_transcripts"
     TRANSCRIPTS_COLLECTION: str = "transcripts"
     
+    # LLM Provider settings (ollama, openai, gemini)
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")
+    
     # Ollama settings
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     EMBEDDING_MODEL: str = "nomic-embed-text:latest"
     FAST_MODEL: str = "codellama:7b"
     QUALITY_MODEL: str = "qwen2.5-coder:7b"
+    
+    # OpenAI settings (optional)
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    
+    # Gemini settings (optional)
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-pro")
     
     # Search settings
     DEFAULT_TOP_K: int = 5

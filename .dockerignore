@@ -1,0 +1,60 @@
+# ==============================================
+# Docker Ignore File
+# ==============================================
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Environment files (use env vars in Docker)
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.temp
+.DS_Store
+
+# Chat sessions (will be recreated)
+chat_sessions/
+
+# Scripts not needed in container
+export_mongodb.py
+
+# Documentation (optional)
+*.md
+!README.md

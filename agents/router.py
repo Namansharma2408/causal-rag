@@ -6,15 +6,15 @@ from typing import Optional, Any
 
 from .base import BaseAgent
 from ..models import Query, QueryType, AgentResponse
-from ..services.ollama import OllamaLLM
+from ..services.llm_provider import get_llm, UnifiedLLM
 
 
 class RouterAgent(BaseAgent):
     """Routes queries based on type classification."""
     
-    def __init__(self, llm: Optional[OllamaLLM] = None):
+    def __init__(self, llm: Optional[UnifiedLLM] = None):
         super().__init__("Router")
-        self.llm = llm or OllamaLLM()
+        self.llm = llm or get_llm()
     
     def process(self, query: Query, context: Optional[Any] = None) -> AgentResponse:
         """Classify query type."""

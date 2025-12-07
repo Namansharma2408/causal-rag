@@ -7,7 +7,7 @@ from typing import Optional, Any, List, Dict
 
 from .base import BaseAgent
 from ..models import Query, AgentResponse
-from ..services.ollama import OllamaLLM
+from ..services.llm_provider import get_llm, UnifiedLLM
 from ..services.transcripts import TranscriptManager
 
 
@@ -16,11 +16,11 @@ class ProofAgent(BaseAgent):
     
     def __init__(
         self, 
-        llm: Optional[OllamaLLM] = None,
+        llm: Optional[UnifiedLLM] = None,
         transcripts: Optional[TranscriptManager] = None
     ):
         super().__init__("Proof")
-        self.llm = llm or OllamaLLM()
+        self.llm = llm or get_llm()
         self.transcripts = transcripts or TranscriptManager()
     
     def process(self, query: Query, context: Optional[Any] = None) -> AgentResponse:
