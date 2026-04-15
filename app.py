@@ -7,29 +7,29 @@ Used by server.py for the HTML/CSS/JS frontend.
 import uuid
 import json
 import sys
+import importlib
 from datetime import datetime
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+current_dir = Path(__file__).parent
+sys.path.insert(0, str(current_dir.parent))
 
-# Import RAG system
+# Import local package modules dynamically so relative imports inside package work
+RAG_AVAILABLE = False
 try:
-    from rag_system import RAGOrchestrator
-    from config import Config
+    package_name = current_dir.name
+    rag_module = importlib.import_module(f"{package_name}.ragSystem")
+    config_module = importlib.import_module(f"{package_name}.config")
+    RAGOrchestrator = rag_module.RAGOrchestrator
+    Config = config_module.Config
     RAG_AVAILABLE = True
-except ImportError:
-    try:
-        from finalAgent.rag_system import RAGOrchestrator
-        from finalAgent.config import Config
-        RAG_AVAILABLE = True
-    except ImportError as e:
-        print(f"Import error: {e}")
-        RAG_AVAILABLE = False
+except Exception as e:
+    print(f"Import error: {e}")
+    RAG_AVAILABLE = False
 
 
 # Session storage
-SESSIONS_DIR = Path(__file__).parent / "chat_sessions"
+SESSIONS_DIR = Path(__file__).parent / "chatSessions"
 SESSIONS_DIR.mkdir(exist_ok=True)
 
 

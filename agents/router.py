@@ -6,7 +6,7 @@ from typing import Optional, Any
 
 from .base import BaseAgent
 from ..models import Query, QueryType, AgentResponse
-from ..services.llm_provider import get_llm, UnifiedLLM
+from ..services.llmProvider import get_llm, UnifiedLLM
 
 
 class RouterAgent(BaseAgent):

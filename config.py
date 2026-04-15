@@ -47,7 +47,7 @@ class Config:
     EMBEDDING_BATCH_SIZE: int = 32
     
     # Session settings
-    SESSION_DIR: str = "sessions"
+    SESSION_DIR: str = "chatSessions"
     MAX_MEMORY_ITEMS: int = 10
     
     # Performance settings
@@ -82,7 +82,7 @@ def setup_logging(level: Optional[str] = None) -> logging.Logger:
         datefmt="%Y-%m-%d %H:%M:%S"
     )
     
-    logger = logging.getLogger("FinalAgent")
+    logger = logging.getLogger("CausalRAG")
     
     # Reduce noise from external libraries
     logging.getLogger("pymongo").setLevel(logging.WARNING)

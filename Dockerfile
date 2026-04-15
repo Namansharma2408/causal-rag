@@ -45,11 +45,11 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY . .
 
 # Copy entrypoint script and make executable
-COPY scripts/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY scripts/dockerEntrypoint.sh /dockerEntrypoint.sh
+RUN chmod +x /dockerEntrypoint.sh
 
 # Create necessary directories
-RUN mkdir -p /app/chat_sessions
+RUN mkdir -p /app/chatSessions
 
 # Expose the port
 EXPOSE 5000
@@ -59,4 +59,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/ || exit 1
 
 # Run the application
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/dockerEntrypoint.sh"]

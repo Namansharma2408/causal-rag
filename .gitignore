@@ -16,4 +16,4 @@ venv/
 # OS files
 .DS_Store
 
-finalAgent/
+data/mongoData/

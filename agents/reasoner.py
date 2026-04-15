@@ -6,7 +6,7 @@ from typing import Optional, Any, List
 
 from .base import BaseAgent
 from ..models import Query, Document, AgentResponse
-from ..services.llm_provider import get_llm, UnifiedLLM
+from ..services.llmProvider import get_llm, UnifiedLLM
 
 
 class ReasonerAgent(BaseAgent):

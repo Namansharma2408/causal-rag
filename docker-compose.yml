@@ -21,7 +21,7 @@ services:
       - THINKING_MODE=${THINKING_MODE:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      - ./chat_sessions:/app/chat_sessions
+      - ./chatSessions:/app/chatSessions
     depends_on:
       mongodb:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
     container_name: causal-ai-mongodb-init
     environment:
       - MONGODB_URI=mongodb://mongodb:27017
-    command: ["python", "scripts/init_mongodb.py"]
+    command: ["python", "scripts/initMongoDb.py"]
     depends_on:
       mongodb:
         condition: service_healthy

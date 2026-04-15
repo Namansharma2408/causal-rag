@@ -7,7 +7,7 @@ from typing import Optional, Any, List, Dict
 
 from .base import BaseAgent
 from ..models import Query, AgentResponse
-from ..services.llm_provider import get_llm, UnifiedLLM
+from ..services.llmProvider import get_llm, UnifiedLLM
 from ..services.transcripts import TranscriptManager
 
 

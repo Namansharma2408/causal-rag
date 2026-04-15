@@ -3,7 +3,7 @@ from .ollama import OllamaLLM
 from .mongodb import MongoDBManager
 from .memory import ConversationMemory
 from .transcripts import TranscriptManager
-from .llm_provider import (
+from .llmProvider import (
     LLMProvider,
     LLMResponse,
     UnifiedLLM,

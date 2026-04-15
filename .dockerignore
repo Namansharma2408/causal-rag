@@ -38,7 +38,7 @@ causal-rag.tar.gz
 .env
 .env.local
 .env.*.local
-finalAgent/.env
+data/mongoData/
 
 # Logs
 *.log

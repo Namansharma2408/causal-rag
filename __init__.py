@@ -1,23 +1,13 @@
-"""
-FinalAgent - Production-Ready Multi-Agent RAG System
-=====================================================
+"""Causal AI RAG package.
 
-A modular RAG (Retrieval-Augmented Generation) system with:
-- Hybrid search (Vector + BM25)
-- Multi-agent architecture
-- MongoDB integration
-- Evidence extraction and verification
-
-Usage:
-    from finalAgent import RAGSystem
-    
-    rag = RAGSystem()
-    result = rag.answer("What is the refund policy?")
-    evidence = rag.get_evidence()
+Production-ready multi-agent RAG with:
+- hybrid retrieval (vector + keyword)
+- transcript-backed evidence verification
+- optional thinking mode with multi-model consensus
 """
 
 from .config import Config
-from .rag_system import RAGSystem
+from .ragSystem import RAGSystem
 from .api import (
     answer_question,
     answer_with_proof,

@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from ..models import Query, Document
-from ..services.llm_provider import get_llm, UnifiedLLM, LLMProvider
+from ..services.llmProvider import get_llm, UnifiedLLM, LLMProvider
 
 
 class ModelRole(Enum):

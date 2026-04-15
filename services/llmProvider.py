@@ -9,6 +9,7 @@ This module provides a clean abstraction for multiple LLM providers:
 """
 
 import os
+import importlib
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, List
 from enum import Enum
@@ -82,8 +83,7 @@ class OllamaLLM(BaseLLM):
     ):
         global httpx
         if httpx is None:
-            import httpx as _httpx
-            httpx = _httpx
+            httpx = importlib.import_module("httpx")
             
         self.base_url = base_url
         self.default_model = default_model
@@ -174,8 +174,7 @@ class OpenAILLM(BaseLLM):
             global openai
             if openai is None:
                 try:
-                    import openai as _openai
-                    openai = _openai
+                    openai = importlib.import_module("openai")
                 except ImportError:
                     raise ImportError("openai package not installed. Run: pip install openai")
             
@@ -250,8 +249,7 @@ class GeminiLLM(BaseLLM):
         global google_genai
         if google_genai is None:
             try:
-                import google.generativeai as _genai
-                google_genai = _genai
+                google_genai = importlib.import_module("google.generativeai")
                 google_genai.configure(api_key=self.api_key)
             except ImportError:
                 raise ImportError("google-generativeai package not installed. Run: pip install google-generativeai")
@@ -481,7 +479,7 @@ def get_llm(
         UnifiedLLM instance
         
     Example:
-        from services.llm_provider import get_llm
+    from services.llmProvider import get_llm
         
         llm = get_llm()
         response = llm.generate("Hello, world!")
@@ -547,7 +545,7 @@ def generate(
         Generated text
         
     Example:
-        from services.llm_provider import generate
+    from services.llmProvider import generate
         
         response = generate("What is 2 + 2?")
         print(response)  # "4"

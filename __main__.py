@@ -1,10 +1,10 @@
 """
-Main entry point for FinalAgent.
+Main entry point for Causal AI RAG package.
 
 Usage:
-    python -m finalAgent                    # Interactive mode
-    python -m finalAgent -q "Question?"     # Single question
-    python -m finalAgent -q "Q?" --proof    # With evidence
+    python -m <package_name>                    # Interactive mode
+    python -m <package_name> -q "Question?"     # Single question
+    python -m <package_name> -q "Q?" --proof    # With evidence
 """
 
 from .cli import main

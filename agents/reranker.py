@@ -10,7 +10,7 @@ import os
 
 from .base import BaseAgent
 from ..models import Query, Document, AgentResponse
-from ..services.llm_provider import get_llm, UnifiedLLM
+from ..services.llmProvider import get_llm, UnifiedLLM
 
 # Cross-encoder model options (from smallest to largest)
 CROSS_ENCODER_MODELS = [

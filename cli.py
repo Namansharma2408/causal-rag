@@ -2,14 +2,14 @@ import sys
 from typing import Optional
 
 from .config import logger
-from .rag_system import RAGSystem
+from .ragSystem import RAGSystem
 
 
 def print_help():
     """Print help message."""
     print("""
 ╔══════════════════════════════════════════════════════════════╗
-║                    FinalAgent Commands                        ║
+║                    Causal AI Commands                         ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  help, h, ?      - Show this help                            ║
 ║  quit, exit, q   - Exit the program                          ║
@@ -47,7 +47,7 @@ def format_evidence(evidence: dict) -> str:
 def interactive_mode(session_id: Optional[str] = None):
     print("""
 ╔══════════════════════════════════════════════════════════════╗
-║                    FinalAgent RAG System                      ║
+║                    Causal AI RAG System                       ║
 ║                  Type 'help' for commands                     ║
 ╚══════════════════════════════════════════════════════════════╝
     """)
@@ -125,7 +125,7 @@ def interactive_mode(session_id: Optional[str] = None):
 def main():
     import argparse
     
-    parser = argparse.ArgumentParser(description="FinalAgent RAG System")
+    parser = argparse.ArgumentParser(description="Causal AI RAG System")
     parser.add_argument("--session", "-s", help="Session ID to use/resume")
     parser.add_argument("--question", "-q", help="Single question to answer")
     parser.add_argument("--proof", "-p", action="store_true", help="Include evidence")

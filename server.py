@@ -1,11 +1,12 @@
 import sys
+import importlib
 from pathlib import Path
 
 # Add current directory to path for local imports
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
-# Also add parent for finalAgent imports as fallback
+# Add parent so package import works
 sys.path.insert(0, str(current_dir.parent))
 
 from fastapi import FastAPI, HTTPException
@@ -17,23 +18,20 @@ import uuid
 import json
 from datetime import datetime
 
-# Import RAG system - try local first, then fallback to finalAgent
+# Import local package modules dynamically so relative imports inside package work
 RAG_AVAILABLE = False
+TranscriptManager = None
 try:
-    # Try importing as a package (with relative imports working)
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("rag_system", current_dir / "rag_system.py")
-    if spec and spec.loader:
-        # Local imports won't work, use finalAgent
-        raise ImportError("Use finalAgent instead")
-except:
-    pass
+    package_name = current_dir.name
+    rag_module = importlib.import_module(f"{package_name}.ragSystem")
+    config_module = importlib.import_module(f"{package_name}.config")
+    transcripts_module = importlib.import_module(f"{package_name}.services.transcripts")
 
-try:
-    from finalAgent.rag_system import RAGOrchestrator
-    from finalAgent.config import Config
+    RAGOrchestrator = rag_module.RAGOrchestrator
+    Config = config_module.Config
+    TranscriptManager = transcripts_module.TranscriptManager
     RAG_AVAILABLE = True
-except ImportError as e:
+except Exception as e:
     print(f"Warning: RAG system not available: {e}")
     RAG_AVAILABLE = False
 
@@ -49,7 +47,7 @@ app.add_middleware(
 )
 
 # Session storage
-SESSIONS_DIR = Path(__file__).parent / "chat_sessions"
+SESSIONS_DIR = Path(__file__).parent / "chatSessions"
 SESSIONS_DIR.mkdir(exist_ok=True)
 
 
@@ -219,7 +217,6 @@ async def get_transcript(transcript_id: str):
         raise HTTPException(status_code=503, detail="RAG system not available")
     
     try:
-        from finalAgent.services.transcripts import TranscriptManager
         tm = TranscriptManager()
         doc = tm.get_transcript(transcript_id)
         tm.close()

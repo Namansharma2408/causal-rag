@@ -49,8 +49,8 @@ up: network mongodb
 			-e MONGODB_PORT=27017 \
 			-e GEMINI_API_KEY=$(GEMINI_API_KEY) \
 			-e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
-			-v $$(pwd)/finalAgent/mongo_data:/app/mongo_data:ro \
-			-v $$(pwd)/chat_sessions:/app/chat_sessions \
+			-v $$(pwd)/data/mongoData:/app/mongo_data:ro \
+			-v $$(pwd)/chatSessions:/app/chatSessions \
 			$(APP_IMAGE); \
 	fi
 	@echo ""
@@ -102,7 +102,13 @@ clean-all: clean
 init-db: mongodb
 	@echo "Initializing MongoDB with transcript data..."
 	sudo docker exec $(MONGO_CONTAINER) mongosh --eval 'db.adminCommand("ping")' >/dev/null
-	cd finalAgent && python3 -c "from services.mongodb import MongoDBService; m=MongoDBService(); m.initialize_from_json()"
+	sudo docker run --rm \
+		--network $(NETWORK) \
+		-e MONGODB_URI=mongodb://$(MONGO_CONTAINER):27017 \
+		-v $$(pwd)/data/mongoData:/app/mongo_data:ro \
+		-v $$(pwd)/scripts:/app/scripts:ro \
+		$(APP_IMAGE) \
+		python /app/scripts/initMongoDb.py
 
 # Restart the app
 restart:

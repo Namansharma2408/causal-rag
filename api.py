@@ -1,7 +1,6 @@
 from typing import Optional, Dict, Any, List
 
-from .config import Config
-from .rag_system import RAGSystem
+from .ragSystem import RAGSystem
 
 # Global instance for simple API usage
 _default_system: Optional[RAGSystem] = None

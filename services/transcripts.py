@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Optional
-from pymongo import MongoClient
+import importlib
 
 from ..config import Config, logger
 
@@ -8,7 +8,9 @@ class TranscriptManager:
     
     def __init__(self, config: Optional[Config] = None):
         self.config = config or Config()
-        self._client = MongoClient(self.config.MONGODB_URI)
+        pymongo = importlib.import_module("pymongo")
+        mongo_client_cls = getattr(pymongo, "MongoClient")
+        self._client = mongo_client_cls(self.config.MONGODB_URI)
         self._db = self._client[self.config.TRANSCRIPTS_DB]
         self._collection = self._db[self.config.TRANSCRIPTS_COLLECTION]
     
@@ -35,7 +37,7 @@ class TranscriptManager:
         if not doc:
             return None
         
-        turns = doc.get("turns", [])
+        turns = doc.get("turns") or doc.get("conversation", [])
         if not turns:
             return None
         
@@ -57,7 +59,7 @@ class TranscriptManager:
             return []
         
         matches = []
-        turns = doc.get("turns", [])
+        turns = doc.get("turns") or doc.get("conversation", [])
         
         for i, turn in enumerate(turns):
             text = turn.get("text", "").lower()
