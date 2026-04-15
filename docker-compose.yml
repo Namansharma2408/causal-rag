@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # Main RAG Application
+  rag-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: causal-ai-rag
+    ports:
+      - "5000:5000"
+    environment:
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-pro}
+      - MONGODB_URI=mongodb://mongodb:27017
+      - FAST_MODE=${FAST_MODE:-true}
+      - THINKING_MODE=${THINKING_MODE:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./chat_sessions:/app/chat_sessions
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      mongodb-init:
+        condition: service_completed_successfully
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # MongoDB Initialization (runs once to load data)
+  mongodb-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: causal-ai-mongodb-init
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+    command: ["python", "scripts/init_mongodb.py"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - rag-network
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: causal-ai-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Ollama LLM Service (optional - for thinking mode)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: causal-ai-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - rag-network
+    restart: unless-stopped
+    profiles:
+      - thinking  # Only start with: docker-compose --profile thinking up
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # Comment out the deploy section above if you don't have NVIDIA GPU
+
+networks:
+  rag-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+  mongodb_config:
+  ollama_data:
