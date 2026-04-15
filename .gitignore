@@ -1,4 +1,19 @@
 .env
 .env.*
 
+# Python caches and build artifacts
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+
+# OS files
+.DS_Store
+
 finalAgent/
