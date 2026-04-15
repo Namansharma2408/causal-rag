@@ -3,6 +3,7 @@ Extractor agent - Extracts relevant information from documents.
 """
 
 from typing import Optional, Any, List
+from time import perf_counter
 
 from .base import BaseAgent
 from ..models import Query, Document, AgentResponse
@@ -18,9 +19,12 @@ class ExtractorAgent(BaseAgent):
     
     def process(self, query: Query, context: Optional[Any] = None) -> AgentResponse:
         """Extract relevant information from documents."""
+        t0 = perf_counter()
+        print(f"[TRACE][ENTER][ExtractorAgent.process] q_len={len(query.text)}")
         documents: List[Document] = context if context else []
         
         if not documents:
+            print(f"[TRACE][EXIT][ExtractorAgent.process] docs=0 took={perf_counter()-t0:.3f}s")
             return AgentResponse(
                 agent_name=self.name,
                 result="",
@@ -63,6 +67,10 @@ Key Information and Insights:"""
         extracted = self.llm.generate_quality(prompt)
         
         self.log(f"Extracted {len(extracted)} chars")
+        print(
+            f"[TRACE][EXIT][ExtractorAgent.process] docs={len(documents)} "
+            f"extracted_len={len(extracted)} took={perf_counter()-t0:.3f}s"
+        )
         
         return AgentResponse(
             agent_name=self.name,

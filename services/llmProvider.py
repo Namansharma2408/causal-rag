@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any, List
 from enum import Enum
 from dataclasses import dataclass
+from time import perf_counter
 
 # Lazy imports to avoid dependency issues
 httpx = None
@@ -79,7 +80,7 @@ class OllamaLLM(BaseLLM):
         self, 
         base_url: str = "http://localhost:11434",
         default_model: str = "qwen2.5-coder:7b",
-        timeout: float = 120.0
+        timeout: float = 30.0
     ):
         global httpx
         if httpx is None:
@@ -103,6 +104,8 @@ class OllamaLLM(BaseLLM):
         max_tokens: Optional[int] = None,
         **kwargs
     ) -> LLMResponse:
+        t0 = perf_counter()
+        print(f"[TRACE][ENTER][OllamaLLM.generate] model={model or self.default_model} timeout={self.timeout}")
         model = model or self.default_model
         client = self._get_client()
         
@@ -137,11 +140,13 @@ class OllamaLLM(BaseLLM):
                 provider=self.provider,
                 metadata={"error": str(e)}
             )
+        finally:
+            print(f"[TRACE][EXIT][OllamaLLM.generate] model={model} took={perf_counter()-t0:.3f}s")
     
     def is_available(self) -> bool:
         try:
-            client = self._get_client()
-            response = client.get(f"{self.base_url}/api/tags")
+            # Keep health checks short so provider selection does not block requests
+            response = httpx.get(f"{self.base_url}/api/tags", timeout=2.0)
             return response.status_code == 200
         except:
             return False
@@ -228,7 +233,11 @@ class OpenAILLM(BaseLLM):
             )
     
     def is_available(self) -> bool:
-        return bool(self.api_key)
+        if not self.api_key:
+            return False
+        key = self.api_key.strip().lower()
+        invalid_markers = ["your_", "placeholder", "changeme", "replace_me", "dummy", "test"]
+        return not any(marker in key for marker in invalid_markers)
 
 
 class GeminiLLM(BaseLLM):
@@ -303,7 +312,11 @@ class GeminiLLM(BaseLLM):
             )
     
     def is_available(self) -> bool:
-        return bool(self.api_key)
+        if not self.api_key:
+            return False
+        key = self.api_key.strip().lower()
+        invalid_markers = ["your_", "placeholder", "changeme", "replace_me", "dummy", "test"]
+        return not any(marker in key for marker in invalid_markers)
 
 
 class UnifiedLLM:
@@ -360,21 +373,34 @@ class UnifiedLLM:
     
     def _get_provider(self, provider: Optional[LLMProvider] = None) -> BaseLLM:
         """Get the appropriate provider instance."""
+        t0 = perf_counter()
+        print(f"[TRACE][ENTER][UnifiedLLM._get_provider] provider_override={provider} preferred={self.preferred_provider}")
         # Use specified provider
         if provider:
-            return self.providers[provider]
+            selected = self.providers[provider]
+            self._active_provider = provider
+            print(f"[TRACE][EXIT][UnifiedLLM._get_provider] selected={provider.value} took={perf_counter()-t0:.3f}s")
+            return selected
         
-        # Use preferred provider if set
+        # Use preferred provider if set and available
         if self.preferred_provider:
-            return self.providers[self.preferred_provider]
+            preferred_llm = self.providers[self.preferred_provider]
+            if preferred_llm.is_available():
+                self._active_provider = self.preferred_provider
+                print(f"[TRACE][EXIT][UnifiedLLM._get_provider] selected={self.preferred_provider.value} took={perf_counter()-t0:.3f}s")
+                return preferred_llm
+            print(f"[TRACE][UnifiedLLM._get_provider] preferred_unavailable={self.preferred_provider.value}; trying fallback")
         
         # Auto-select based on availability
         for p in self.fallback_order:
             if self.providers[p].is_available():
                 self._active_provider = p
+                print(f"[TRACE][EXIT][UnifiedLLM._get_provider] selected={p.value} took={perf_counter()-t0:.3f}s")
                 return self.providers[p]
         
         # Default to Ollama even if not available (will return error)
+        self._active_provider = LLMProvider.OLLAMA
+        print(f"[TRACE][EXIT][UnifiedLLM._get_provider] selected=ollama_fallback_unavailable took={perf_counter()-t0:.3f}s")
         return self.providers[LLMProvider.OLLAMA]
     
     def generate(
@@ -407,6 +433,8 @@ class UnifiedLLM:
             response = llm.generate("What is the capital of France?")
             print(response)  # "Paris"
         """
+        t0 = perf_counter()
+        print(f"[TRACE][ENTER][UnifiedLLM.generate] prompt_len={len(prompt)} temp={temperature}")
         llm = self._get_provider(provider)
         response = llm.generate(
             prompt=prompt,
@@ -414,6 +442,10 @@ class UnifiedLLM:
             temperature=temperature,
             max_tokens=max_tokens,
             **kwargs
+        )
+        print(
+            f"[TRACE][EXIT][UnifiedLLM.generate] provider={llm.provider.value} "
+            f"out_len={len(response.text) if response and response.text else 0} took={perf_counter()-t0:.3f}s"
         )
         return response.text
     

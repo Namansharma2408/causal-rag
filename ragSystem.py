@@ -1,5 +1,6 @@
 from typing import Optional, List, Dict, Any
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from time import perf_counter
 
 from .config import Config, logger
 from .models import Query, QueryType, Document, RAGResult
@@ -69,13 +70,17 @@ class RAGOrchestrator:
         Returns:
             RAGResult with answer and metadata
         """
+        start = perf_counter()
         query = Query(text=question, session_id=session_id)
+        logger.info(f"[TRACE][pipeline][start] session={session_id} q_len={len(question)}")
         use_thinking = thinking_mode if thinking_mode is not None else self.config.THINKING_MODE
         
         # Check for thinking mode
         if use_thinking:
             logger.info("[ThinkingMode] Using multi-model consensus")
-            return self._answer_thinking(query, include_proof)
+            result = self._answer_thinking(query, include_proof)
+            logger.info(f"[TRACE][pipeline][done] mode=thinking total={perf_counter()-start:.3f}s")
+            return result
         
         # 0. Check if query needs decomposition (multi-hop)
         decompose_result = self.decomposer.process(query)
@@ -84,17 +89,21 @@ class RAGOrchestrator:
         if decomposition.needs_decomposition:
             # Multi-hop: Process each sub-query and synthesize
             logger.info(f"[MultiHop] Decomposing query into {len(decomposition.sub_queries)} sub-queries")
-            return self._answer_multihop(
+            result = self._answer_multihop(
                 original_question=question,
                 sub_queries=decomposition.sub_queries,
                 session_id=session_id,
                 include_proof=include_proof,
                 complexity_score=decomposition.complexity_score
             )
+            logger.info(f"[TRACE][pipeline][done] mode=multihop total={perf_counter()-start:.3f}s")
+            return result
         else:
             # Simple query: Direct processing
             logger.info(f"[SingleHop] Processing simple query directly (complexity: {decomposition.complexity_score}/10)")
-            return self._answer_single(query, include_proof)
+            result = self._answer_single(query, include_proof)
+            logger.info(f"[TRACE][pipeline][done] mode=singlehop total={perf_counter()-start:.3f}s")
+            return result
     
     def _answer_thinking(
         self,
@@ -170,46 +179,58 @@ class RAGOrchestrator:
             include_proof: Whether to include evidence verification
             fast_mode: Override config fast_mode setting
         """
+        t_single = perf_counter()
         use_fast = fast_mode if fast_mode is not None else self.config.FAST_MODE
         
         # 1. Route query (skip in fast mode for sub-queries)
         if not use_fast:
+            t_route = perf_counter()
             route_result = self.router.process(query)
             query.query_type = route_result.result
+            logger.info(f"[TRACE][singlehop][router] {perf_counter()-t_route:.3f}s")
         else:
             query.query_type = QueryType.FACTUAL  # Default type
         
         # 2. Retrieve documents
+        t_retrieve = perf_counter()
         retrieve_result = self.retriever.process(query)
         documents = retrieve_result.documents
         transcript_ids = retrieve_result.transcript_ids
+        logger.info(f"[TRACE][singlehop][retriever] {perf_counter()-t_retrieve:.3f}s docs={len(documents)}")
         
         # 3. Rerank documents (skip in fast mode or if few docs)
         if not use_fast and len(documents) > self.config.SKIP_RERANK_THRESHOLD:
+            t_rerank = perf_counter()
             rerank_result = self.reranker.process(query, documents)
             reranked_docs = rerank_result.documents
             transcript_ids = rerank_result.transcript_ids
+            logger.info(f"[TRACE][singlehop][reranker] {perf_counter()-t_rerank:.3f}s docs={len(reranked_docs)}")
         else:
             reranked_docs = documents  # Use retrieval order
             if use_fast:
                 logger.info(f"[FastMode] Skipping reranking")
         
         # 4. Extract information
+        t_extract = perf_counter()
         extract_result = self.extractor.process(query, reranked_docs)
         extracted = extract_result.result
+        logger.info(f"[TRACE][singlehop][extractor] {perf_counter()-t_extract:.3f}s")
         
         # 5. Generate answer
         reason_context = {
             "extracted": extracted,
             "documents": reranked_docs
         }
+        t_reason = perf_counter()
         reason_result = self.reasoner.process(query, reason_context)
         answer = reason_result.result
+        logger.info(f"[TRACE][singlehop][reasoner] {perf_counter()-t_reason:.3f}s answer_len={len(answer) if answer else 0}")
         
         # 6. Check quality (skip in fast mode)
         quality_score = 70  # Default
         quality_feedback = "Fast mode - quality check skipped"
         if not use_fast:
+            t_quality = perf_counter()
             quality_context = {
                 "answer": answer,
                 "documents": reranked_docs
@@ -217,16 +238,21 @@ class RAGOrchestrator:
             quality_result = self.quality.process(query, quality_context)
             quality_score = quality_result.result.get("score", 0)
             quality_feedback = quality_result.result.get("feedback", "")
+            logger.info(f"[TRACE][singlehop][quality] {perf_counter()-t_quality:.3f}s score={quality_score}")
         
         # 7. Optional proof verification
         evidence = None
         if include_proof and transcript_ids:
+            t_proof = perf_counter()
             proof_context = {
                 "answer": answer,
                 "transcript_ids": transcript_ids
             }
             proof_result = self.proof.process(query, proof_context)
             evidence = proof_result.result
+            logger.info(f"[TRACE][singlehop][proof] {perf_counter()-t_proof:.3f}s")
+
+        logger.info(f"[TRACE][singlehop][done] total={perf_counter()-t_single:.3f}s")
         
         return RAGResult(
             answer=answer,

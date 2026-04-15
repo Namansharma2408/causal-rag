@@ -9,23 +9,44 @@ import os
 import importlib
 from pathlib import Path
 
+try:
+    from bson import json_util  # type: ignore
+except Exception:
+    json_util = None
+
 
 def _resolve_data_dir() -> Path:
     """Resolve data directory from common host/container locations."""
-    candidates = [
-        Path(os.getenv("MONGO_DATA_DIR", "")),
+    candidates = []
+
+    env_path = os.getenv("MONGO_DATA_DIR", "").strip()
+    if env_path:
+        candidates.append(Path(env_path))
+
+    candidates.extend([
         Path("/app/mongo_data"),
         Path(__file__).resolve().parents[1] / "data" / "mongoData",
-    ]
+    ])
+
     for path in candidates:
-        if str(path) and path.exists():
+        if path.exists():
             return path
     return Path("/app/mongo_data")
 
 
 def _load_json(file_path: Path):
     with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        text = f.read()
+
+    # Prefer Mongo Extended JSON parser so fields like {"$oid": ...} work.
+    if json_util is not None:
+        try:
+            return json_util.loads(text)
+        except Exception:
+            pass
+
+    # Fallback for plain JSON files.
+    return json.loads(text)
 
 
 def _insert_collection(db, collection_name: str, payload) -> int:

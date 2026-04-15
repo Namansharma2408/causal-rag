@@ -10,6 +10,8 @@ MONGO_DATA = mongodb_data
 
 # Extract API key from .env if it exists
 GEMINI_API_KEY ?= $(shell grep -oP 'GEMINI_API_KEY=\K.*' .env 2>/dev/null || echo "")
+LLM_PROVIDER ?= $(shell grep -oP 'LLM_PROVIDER=\K.*' .env 2>/dev/null || echo "gemini")
+GEMINI_MODEL ?= $(shell grep -oP 'GEMINI_MODEL=\K.*' .env 2>/dev/null || echo "gemini-2.5-pro")
 
 # Create docker network
 network:
@@ -44,10 +46,14 @@ up: network mongodb
 		sudo docker run -d \
 			--name $(APP_CONTAINER) \
 			--network $(NETWORK) \
+			--add-host=host.docker.internal:host-gateway \
 			-p 5000:5000 \
+			-e MONGODB_URI=mongodb://$(MONGO_CONTAINER):27017 \
 			-e MONGODB_HOST=$(MONGO_CONTAINER) \
 			-e MONGODB_PORT=27017 \
+			-e LLM_PROVIDER=$(LLM_PROVIDER) \
 			-e GEMINI_API_KEY=$(GEMINI_API_KEY) \
+			-e GEMINI_MODEL=$(GEMINI_MODEL) \
 			-e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
 			-v $$(pwd)/data/mongoData:/app/mongo_data:ro \
 			-v $$(pwd)/chatSessions:/app/chatSessions \

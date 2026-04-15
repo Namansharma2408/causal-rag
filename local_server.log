@@ -1,0 +1,42 @@
+nohup: ignoring input
+INFO:     Started server process [122411]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5000 (Press CTRL+C to quit)
+2026-04-15 07:31:08 - CausalRAG - INFO - [TRACE][pipeline][start] session=85c86ab7 q_len=24
+2026-04-15 07:31:08 - CausalRAG - INFO - [Decomposer] Simple query (score: 2/10) - no decomposition needed
+2026-04-15 07:31:08 - CausalRAG - INFO - [SingleHop] Processing simple query directly (complexity: 2/10)
+2026-04-15 07:31:08 - CausalRAG - INFO - [TRACE][embedding][request] model=nomic-embed-text:latest url=http://localhost:11434/api/embeddings len=24
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][embedding][done] dim=768 took=0.910s
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][mongodb][hybrid_search][start] top_k=5 top_clusters=5 uri=mongodb://localhost:27017
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][mongodb][clusters] count=0 took=0.003s
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][mongodb][vector] docs=0 took=0.000s
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][mongodb][bm25] docs=0 took=0.000s
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][mongodb][hybrid_search][done] out_docs=0 total=0.004s
+2026-04-15 07:31:09 - CausalRAG - INFO - [Retriever] Retrieved 0 documents
+2026-04-15 07:31:09 - CausalRAG - INFO - [Retriever] Transcript IDs: []
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][singlehop][retriever] 0.914s docs=0
+2026-04-15 07:31:09 - CausalRAG - INFO - [FastMode] Skipping reranking
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][singlehop][extractor] 0.000s
+2026-04-15 07:31:09 - CausalRAG - INFO - [Reasoner] No documents available; returning fast fallback answer
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][singlehop][reasoner] 0.000s answer_len=156
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][singlehop][done] total=0.914s
+2026-04-15 07:31:09 - CausalRAG - INFO - [TRACE][pipeline][done] mode=singlehop total=0.914s
+Starting Causal AI Server...
+Open http://localhost:5000 in your browser
+[TRACE][chat][start] session=85c86ab7 fast=True thinking=False proof=False
+[TRACE][chat][config] prepared in 0.000s
+[TRACE][chat][orchestrator] initialized in 0.015s
+[TRACE][ENTER][RetrieverAgent.process] q_len=24
+[TRACE][EXIT][RetrieverAgent.process] docs=0 transcripts=0 took=0.914s
+[TRACE][ENTER][ExtractorAgent.process] q_len=24
+[TRACE][EXIT][ExtractorAgent.process] docs=0 took=0.000s
+[TRACE][ENTER][ReasonerAgent.process] q_len=24
+[TRACE][EXIT][ReasonerAgent.process] docs=0 answer_len=156 took=0.000s fallback=yes
+[TRACE][chat][rag.answer] completed in 0.914s
+[TRACE][chat][done] session=85c86ab7 total=0.929s docs=0
+INFO:     127.0.0.1:39084 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [122411]

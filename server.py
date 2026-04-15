@@ -17,6 +17,7 @@ from typing import Optional, Dict, Any, List
 import uuid
 import json
 from datetime import datetime
+from time import perf_counter
 
 # Import local package modules dynamically so relative imports inside package work
 RAG_AVAILABLE = False
@@ -125,8 +126,13 @@ async def index():
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
+    req_start = perf_counter()
     session_id = request.session_id or str(uuid.uuid4())[:8]
     settings = request.settings or ChatSettings()
+    print(
+        f"[TRACE][chat][start] session={session_id} fast={settings.fast_mode} "
+        f"thinking={settings.thinking_mode} proof={settings.include_proof}"
+    )
     
     if not RAG_AVAILABLE:
         return {
@@ -135,17 +141,24 @@ async def chat(request: ChatRequest):
         }
     
     try:
+        t0 = perf_counter()
         config = Config()
         config.FAST_MODE = settings.fast_mode
         config.THINKING_MODE = settings.thinking_mode
+        print(f"[TRACE][chat][config] prepared in {perf_counter()-t0:.3f}s")
         
+        t1 = perf_counter()
         rag = RAGOrchestrator(config=config)
+        print(f"[TRACE][chat][orchestrator] initialized in {perf_counter()-t1:.3f}s")
+
+        t2 = perf_counter()
         result = rag.answer(
             request.message,
             session_id=session_id,
             include_proof=settings.include_proof,
             thinking_mode=settings.thinking_mode
         )
+        print(f"[TRACE][chat][rag.answer] completed in {perf_counter()-t2:.3f}s")
         
         response = {
             "answer": result.answer,
@@ -174,12 +187,21 @@ async def chat(request: ChatRequest):
             response["winning_model"] = result.metadata.get("winning_model")
             response["consensus_score"] = result.metadata.get("consensus_score")
             response["model_scores"] = result.metadata.get("model_scores", {})
+
+        print(
+            f"[TRACE][chat][done] session={session_id} total={perf_counter()-req_start:.3f}s "
+            f"docs={response.get('doc_count', 0)}"
+        )
         
         return response
     
     except Exception as e:
         import traceback
         traceback.print_exc()
+        print(
+            f"[TRACE][chat][error] session={session_id} total={perf_counter()-req_start:.3f}s "
+            f"error={e}"
+        )
         return {
             "answer": f"Error: {str(e)}",
             "error": True

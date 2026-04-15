@@ -3,6 +3,7 @@ Retriever agent - Fetches relevant documents using hybrid search.
 """
 
 from typing import Optional, Any, List
+from time import perf_counter
 
 from .base import BaseAgent
 from ..models import Query, Document, AgentResponse
@@ -27,6 +28,9 @@ class RetrieverAgent(BaseAgent):
     
     def process(self, query: Query, context: Optional[Any] = None) -> AgentResponse:
         """Retrieve relevant documents."""
+        t0 = perf_counter()
+        print(f"[TRACE][ENTER][RetrieverAgent.process] q_len={len(query.text)}")
+
         # Generate query embedding
         query_embedding = self.embedding.embed(query.text)
         
@@ -44,6 +48,10 @@ class RetrieverAgent(BaseAgent):
         
         self.log(f"Retrieved {len(documents)} documents")
         self.log(f"Transcript IDs: {transcript_ids}")
+        print(
+            f"[TRACE][EXIT][RetrieverAgent.process] docs={len(documents)} "
+            f"transcripts={len(transcript_ids)} took={perf_counter()-t0:.3f}s"
+        )
         
         return AgentResponse(
             agent_name=self.name,

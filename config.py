@@ -13,7 +13,9 @@ load_dotenv()
 class Config:
     
     # MongoDB settings
-    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    MONGODB_HOST: str = os.getenv("MONGODB_HOST", "localhost")
+    MONGODB_PORT: int = int(os.getenv("MONGODB_PORT", "27017"))
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "")
     DB_NAME: str = "conversations_db"
     COLLECTION_NAME: str = "spans"
     TRANSCRIPTS_DB: str = "full_transcripts"
@@ -61,6 +63,26 @@ class Config:
     THINKING_MODELS: list = None  # Will be set in __post_init__
     
     def __post_init__(self):
+        running_in_docker = os.path.exists("/.dockerenv")
+
+        # Local-run normalization: docker service hostnames do not resolve on host machine
+        if not running_in_docker:
+            if self.MONGODB_HOST == "mongodb":
+                self.MONGODB_HOST = "localhost"
+
+            if self.OLLAMA_BASE_URL.startswith("http://ollama:") or self.OLLAMA_BASE_URL.startswith("https://ollama:"):
+                self.OLLAMA_BASE_URL = self.OLLAMA_BASE_URL.replace("ollama", "localhost", 1)
+
+            if "host.docker.internal" in self.OLLAMA_BASE_URL:
+                self.OLLAMA_BASE_URL = self.OLLAMA_BASE_URL.replace("host.docker.internal", "localhost")
+
+        if not self.MONGODB_URI:
+            self.MONGODB_URI = f"mongodb://{self.MONGODB_HOST}:{self.MONGODB_PORT}"
+
+        # If URI is explicitly set with Docker service host, normalize for local run
+        if not running_in_docker and "mongodb://mongodb:" in self.MONGODB_URI:
+            self.MONGODB_URI = self.MONGODB_URI.replace("mongodb://mongodb:", "mongodb://localhost:")
+
         if self.THINKING_MODELS is None:
             self.THINKING_MODELS = [
                 "deepseek-r1:14b",      # Deep reasoning model

@@ -7,6 +7,7 @@ import re
 from typing import List, Dict, Any, Optional, Tuple
 from pymongo import MongoClient
 import numpy as np
+from time import perf_counter
 
 from ..config import Config, logger
 from ..models import Document
@@ -138,13 +139,26 @@ class MongoDBManager:
         Returns:
             List of Document objects
         """
+        t0 = perf_counter()
+        logger.info(
+            f"[TRACE][mongodb][hybrid_search][start] top_k={top_k} "
+            f"top_clusters={top_clusters} uri={self.config.MONGODB_URI}"
+        )
+
         # Find relevant clusters
+        t_clusters = perf_counter()
         cluster_ids = self._find_top_clusters(query_embedding, top_clusters)
+        logger.info(f"[TRACE][mongodb][clusters] count={len(cluster_ids)} took={perf_counter()-t_clusters:.3f}s")
         logger.debug(f"Searching clusters: {cluster_ids}")
         
         # Get results from both methods
+        t_vector = perf_counter()
         vector_results = self._vector_search(query_embedding, top_k * 2, cluster_ids)
+        logger.info(f"[TRACE][mongodb][vector] docs={len(vector_results)} took={perf_counter()-t_vector:.3f}s")
+
+        t_bm25 = perf_counter()
         bm25_results = self._bm25_search(query_text, top_k * 2, cluster_ids)
+        logger.info(f"[TRACE][mongodb][bm25] docs={len(bm25_results)} took={perf_counter()-t_bm25:.3f}s")
         
         # Combine scores
         doc_scores: Dict[str, float] = {}
@@ -185,7 +199,7 @@ class MongoDBManager:
                     "explanation": doc.get("explanation")
                 }
             ))
-        
+        logger.info(f"[TRACE][mongodb][hybrid_search][done] out_docs={len(documents)} total={perf_counter()-t0:.3f}s")
         return documents
     
     def get_by_id(self, doc_id: str) -> Optional[Document]:
